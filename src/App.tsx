@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Dumbbell, Play, Timer, X } from 'lucide-react';
 import type { AIDomain, ActiveTab, CalendarOccurrence } from './types';
 import { AppProvider, useApp } from './context/AppContext';
-import { AudioPlayerProvider, useAudioPlayer } from './context/AudioPlayerContext';
+import { AudioPlayerProvider } from './context/AudioPlayerContext';
 import { AIProvider, useAI } from './context/AIContext';
 import { AuthGate } from './components/AuthGate';
 import { KoraLogo } from './components/ui/KoraLogo';
@@ -12,7 +12,6 @@ import { TodayView } from './components/TodayView';
 import { PlanningView } from './components/PlanningView';
 import { StudiesView } from './components/StudiesView';
 import { SportView } from './components/SportView';
-import { MusicView } from './components/music/MusicView';
 import { QuickAddModal, type QuickAddContext } from './components/QuickAddModal';
 import { EventDetailDrawer } from './components/EventDetailDrawer';
 import { SettingsModal } from './components/SettingsModal';
@@ -21,7 +20,6 @@ import { AIPreviewBar } from './components/AIPreviewBar';
 import { FocusModal } from './components/FocusModal';
 import { LiveWorkoutModal } from './components/sport/LiveWorkoutModal';
 import { WeeklyReviewModal } from './components/WeeklyReviewModal';
-import { PublicSharePage } from './components/music/PublicSharePage';
 import { sendKoraNotification } from './lib/notifications';
 
 function tabToDomain(tab: ActiveTab): AIDomain {
@@ -49,11 +47,13 @@ function KoraApp() {
     completeActiveFocus,
     updateLastSession,
   } = useApp();
-  const player = useAudioPlayer();
   const { openAI, requestAIConfirmation } = useAI();
 
   const [activeTab, setActiveTabState] = useState<ActiveTab>(
-    () => state.preferences.lastSession?.activeTab || 'today'
+    () => {
+      const t = state.preferences.lastSession?.activeTab;
+      return t && t !== 'music' ? t : 'today';
+    }
   );
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [quickAddCtx, setQuickAddCtx] = useState<QuickAddContext | undefined>(undefined);
@@ -95,15 +95,8 @@ function KoraApp() {
     if (shouldApplyLocal) localRestoredRef.current = true;
     if (lastCloudSyncAt) cloudRestoredRef.current = true;
 
-    if (ls.activeTab) {
+    if (ls.activeTab && ls.activeTab !== 'music') {
       setActiveTabState(ls.activeTab);
-    }
-
-    if (ls.audioTrackId && !player.isPlaying) {
-      const foundTrack = state.musicTracks.find((t) => t.id === ls.audioTrackId);
-      if (foundTrack && player.currentTrack?.id !== foundTrack.id) {
-        player.restoreTrack(foundTrack, ls.audioTimeSec || 0, Boolean(ls.audioExpanded));
-      }
     }
 
     if (typeof ls.scrollY === 'number' && ls.scrollY > 20) {
@@ -181,13 +174,6 @@ function KoraApp() {
     state.preferences.notifications?.timers,
   ]);
 
-  // Jump straight to Music tab when user taps cover art inside the maximized audio player
-  useEffect(() => {
-    if (player.pendingOpenTrackId && activeTab !== 'music') {
-      setActiveTab('music');
-    }
-  }, [player.pendingOpenTrackId, activeTab, setActiveTab]);
-
   // Global keyboard shortcuts (Ctrl+K Quick-Add, Ctrl+J Kora AI, 1-5 tabs)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -218,7 +204,6 @@ function KoraApp() {
       else if (e.key === '2') setActiveTab('planning');
       else if (e.key === '3') setActiveTab('studies');
       else if (e.key === '4') setActiveTab('sport');
-      else if (e.key === '5') setActiveTab('music');
     };
 
     window.addEventListener('keydown', onKeyDown);
@@ -356,7 +341,6 @@ function KoraApp() {
           {activeTab === 'sport' && (
             <SportView onOpenQuickAdd={openQuickAdd} onRequestAI={requestAIConfirmation} />
           )}
-          {activeTab === 'music' && <MusicView onOpenQuickAdd={openQuickAdd} />}
         </motion.div>
       </AnimatePresence>
 
@@ -393,16 +377,6 @@ function KoraApp() {
 }
 
 export default function App() {
-  const shareToken =
-    typeof window !== 'undefined'
-      ? new URLSearchParams(window.location.search).get('share')?.trim() || ''
-      : '';
-
-  // Public listener link: zero login, zero Firebase Auth, instant playback!
-  if (shareToken) {
-    return <PublicSharePage token={shareToken} />;
-  }
-
   return (
     <AppProvider>
       <AudioPlayerProvider>

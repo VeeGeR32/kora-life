@@ -4,7 +4,6 @@ import {
   CalendarDays,
   Cloud,
   CloudOff,
-  Disc3,
   Dumbbell,
   GraduationCap,
   Moon,
@@ -43,7 +42,6 @@ const NAV_ITEMS: {
   { id: 'planning', label: 'Planning', mobileLabel: 'Agenda', shortcut: '2', icon: CalendarDays },
   { id: 'studies', label: 'Cours', mobileLabel: 'Cours', shortcut: '3', icon: GraduationCap },
   { id: 'sport', label: 'Sport', mobileLabel: 'Gym', shortcut: '4', icon: Dumbbell },
-  { id: 'music', label: 'Music', mobileLabel: 'Music', shortcut: '5', icon: Disc3 },
 ];
 
 export function Layout({

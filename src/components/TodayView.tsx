@@ -694,8 +694,8 @@ export function TodayView({
             </div>
           </section>
 
-          {/* Music Pulse */}
-          {(activeProject || latestTrack) && (
+          {/* Music Pulse (moved to the standalone Kora Music app) */}
+          {false && (activeProject || latestTrack) && (
             <section className="tempo-card rounded-3xl p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold">Music · Textes</h2>
